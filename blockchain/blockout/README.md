@@ -59,7 +59,7 @@ Key functions of the blockchain application:
 - `registerGateway()` → adds a new gateway, costs 20 ether.  
 - `infrastructureSanityCheck()` → recalculates the healthy percentage of gateways.  
 
-When analyzing the smart contract’s source code, the following function makes it clear it’s 4 ethers.
+When analyzing the smart contract’s source code, the following function makes it clear it’s 4 ether.
 
 ```solidity
   function requestQuotaIncrease(uint8 _gatewayID) external payable circuitBreaker failSafeMonitor {
@@ -73,7 +73,7 @@ When analyzing the smart contract’s source code, the following function makes 
   }
 ```
 
-Anything less than 4 ethers does not satisfy the transaction payment condition requirement. 
+Anything less than 4 ether does not satisfy the transaction payment condition requirement. 
 
 Ok, makes sense, but where are those constants declared? At the beginning of the file:
 
@@ -84,7 +84,7 @@ Ok, makes sense, but where are those constants declared? At the beginning of the
   uint256 constant FAILSAFE_THRESHOLD = 10 ether;
 ```
 
-Similary we could see that 20 ethers are required to register a new gateway:
+Similary, we could see that 20 ether are required to register a new gateway:
 
 ```solidity
   function registerGateway() external payable circuitBreaker failSafeMonitor {
