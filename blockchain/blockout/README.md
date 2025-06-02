@@ -25,7 +25,6 @@ The first endpoint exposes a blockchain RPC node, the second is an interface to 
 
 ```bash
 └─$ curl http://94.237.48.12:53205/
-
 rpc is running!
 ```
 
@@ -56,10 +55,10 @@ Diving into the source code of this challenge, we realize it is simulating a blo
 
 Key functions of the blockchain application:
 
-✅requestQuotaIncrease(uint8 amount) → increase delivery quota by paying 4 ether.  
-✅requestPowerDelivery(uint256 amount, uint8 gatewayId) → triggers the “delivering” status.  
-✅registerGateway() → adds a new gateway, costs 20 ether.  
-✅infrastructureSanityCheck() → recalculates the healthy percentage of gateways.  
+- requestQuotaIncrease(uint8 amount) → increase delivery quota by paying 4 ether.  
+- requestPowerDelivery(uint256 amount, uint8 gatewayId) → triggers the “delivering” status.  
+- registerGateway() → adds a new gateway, costs 20 ether.  
+- infrastructureSanityCheck() → recalculates the healthy percentage of gateways.  
 
 When analyzing the smart contract’s source code, the following function makes it clear it’s 4 ethers.
 
@@ -171,8 +170,8 @@ This check does not validate whether the gateway is actually delivering power or
 
 Any gateway is appearing to be healthy as long the following 2 conditions are met:
 
-✅_kernel is set (it is during registration)  
-✅energyVault is under the cap.  
+- _kernel is set (it is during registration)  
+- energyVault is under the cap.  
 
 We can build on top of these our exploitation chain.
 
@@ -216,11 +215,15 @@ Once we understood the above vulnerabilities and overall functionality of the ap
 
 Analysing the source code of the blockchain application, identifying the flaws and vulnerabilities, we can put together a straightforward and concrete plan on how to crash the power grid.
 
-✅ 1. Use requestQuotaIncrease to pay the quota (4 ether /piece).  
-✅ 2. Trigger requestPowerDelivery to set DELIVERING state.  
-✅ 3. Repeatedly register failing gateways (registerGateway, 20 ether /each).  
-✅ 4. Run infrastructureSanityCheck to update the healthy percentage.  
-✅ 5. Once healthy percentage < 50%, emergency mode triggers and we win!  
+1. Use requestQuotaIncrease to pay the quota (4 ether /piece).  
+2. Trigger requestPowerDelivery to set DELIVERING state.  
+3. Repeatedly register failing gateways (registerGateway, 20 ether /each).  
+4. Run infrastructureSanityCheck to update the healthy percentage.  
+5. Once healthy percentage < 50%, emergency mode triggers and we win!  
+
+Check out a quick flow chart that visualizes the sequential logic steps of the exploit scenario.
+
+[!image](https://github.com/respawnRW/writeups/assets/)
 
 ### What this means in layman’s terms?
 
