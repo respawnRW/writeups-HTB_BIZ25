@@ -149,6 +149,7 @@ This check does not validate whether the gateway is actually delivering power or
 Any gateway is appearing to be healthy as long the following 2 conditions are met:
 
 ✅_kernel is set (it is during registration)
+
 ✅energyVault is under the cap.
 
 We can build on top of these our exploitation chain.
@@ -205,9 +206,7 @@ Analysing the source code of the blockchain application, identifying the flaws a
 
 ### What this means in layman’s terms?
 
-This challenge was about exploiting a stuck state in a smart contract-based power grid system. Normally, the system tracks healthy gateways (nodes that can deliver power). By triggering a stuck “delivering” state (using requestPowerDelivery), the system stopped cleaning up inactive gateways.
-
-We then registered extra failing gateways to dilute the healthy percentage.
+This challenge was about exploiting a stuck state in a smart contract-based power grid system. Normally, the system tracks healthy gateways (nodes that can deliver power). By triggering a stuck “delivering” state (using requestPowerDelivery), the system stopped cleaning up inactive gateways. We then registered extra failing gateways to dilute the healthy percentage.
 
 Finally, when the healthy percentage dropped below 50%, the infrastructureSanityCheck confirmed the system was unhealthy, triggering emergency mode — our goal! In essence: overloading the system’s perception of “health” by adding too many failing gateways until it triggers emergency shutdown — a classic logic bomb exploiting flawed health-check logic.
 
