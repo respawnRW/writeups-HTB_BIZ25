@@ -227,9 +227,9 @@ Check out a quick flow chart that visualizes the sequential logic steps of the e
 
 ### What this means in layman’s terms?
 
-This challenge was about exploiting a stuck state in a smart contract-based power grid system. Normally, the system tracks healthy gateways (nodes that can deliver power). By triggering a stuck “delivering” state (using requestPowerDelivery), the system stopped cleaning up inactive gateways. We then registered extra failing gateways to dilute the healthy percentage.
+This challenge was about exploiting a stuck state in a smart contract-based power grid system. Normally, the system tracks healthy gateways (nodes that can deliver power). By triggering a stuck “delivering” state (using `requestPowerDelivery`), the system stopped cleaning up inactive gateways. We then registered extra failing gateways to dilute the healthy percentage.
 
-Finally, when the healthy percentage dropped below 50%, the infrastructureSanityCheck confirmed the system was unhealthy, triggering emergency mode — our goal! In essence: overloading the system’s perception of “health” by adding too many failing gateways until it triggers emergency shutdown — a classic logic bomb exploiting flawed health-check logic.
+Finally, when the healthy percentage dropped below 50%, the `infrastructureSanityCheck` confirmed the system was unhealthy, triggering emergency mode — our goal! In essence: overloading the system’s perception of “health” by adding too many failing gateways until it triggers emergency shutdown — a classic logic bomb exploiting flawed health-check logic.
 
 This challenge demonstrates that even a small bug like forgetting to reset status can break complex state logic and cause large security issues. Also how important are robust health-checks, since the weak logic was easy to abuse and exploitable. This being a reminder how robust healt checks logic is vital in blockchain applications.
 
@@ -271,7 +271,7 @@ Type 3 to grab the flag and enjoy the success.
 
 ## Conclusion
 
-The Blockout challenge showcases how state management bugs and superficial health-checks can be chained into a devastating exploit. We exploited the stuck DELIVERING state to flood the system with fake gateways, forcing an emergency shutdown — a logic bomb that brought down the power grid!
+The Blockout challenge showcases how state management bugs and superficial health-checks can be chained into a devastating exploit. We exploited the stuck **DELIVERING** state to flood the system with fake gateways, forcing an emergency shutdown — a logic bomb that brought down the power grid!
 
 This highlights a broader lesson: in blockchain security, even tiny logic flaws can spiral into massive system failures. Always validate state transitions and ensure health-checks are meaningful!
 
