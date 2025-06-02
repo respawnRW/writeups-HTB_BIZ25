@@ -75,9 +75,9 @@ When analyzing the smart contract’s source code, the following function makes 
   }
 ```
 
-Anything less than 4 ethers does not satisfy the transaction payment condition requirement. Ok, makes sense, but where are those constants declared?
+Anything less than 4 ethers does not satisfy the transaction payment condition requirement. 
 
-At the beginning of the file:
+Ok, makes sense, but where are those constants declared? At the beginning of the file:
 
 ```solidity
   uint256 constant MAX_CAPACITY = 100 ether;
@@ -216,15 +216,11 @@ Once we understood the above vulnerabilities and overall functionality of the ap
 
 Analysing the source code of the blockchain application, identifying the flaws and vulnerabilities, we can put together a straightforward and concrete plan on how to crash the power grid.
 
-✅ 1. Use requestQuotaIncrease to pay the quota (4 ether /piece).
-
-✅ 2. Trigger requestPowerDelivery to set DELIVERING state.
-
-✅ 3. Repeatedly register failing gateways (registerGateway, 20 ether /each).
-
-✅ 4. Run infrastructureSanityCheck to update the healthy percentage.
-
-✅ 5. Once healthy percentage < 50%, emergency mode triggers and we win!
+✅ 1. Use requestQuotaIncrease to pay the quota (4 ether /piece).  
+✅ 2. Trigger requestPowerDelivery to set DELIVERING state.  
+✅ 3. Repeatedly register failing gateways (registerGateway, 20 ether /each).  
+✅ 4. Run infrastructureSanityCheck to update the healthy percentage.  
+✅ 5. Once healthy percentage < 50%, emergency mode triggers and we win!  
 
 ### What this means in layman’s terms?
 
