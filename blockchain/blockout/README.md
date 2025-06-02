@@ -73,8 +73,8 @@ When analyzing the smart contract’s source code, the following function makes 
 function requestQuotaIncrease(uint8 amount) external payable {
 require(msg.value == 4 ether, "Insufficient payment");
 // Logic to increase quota
-
-}```
+}
+```
 
 Anything less than 4 ethers does not satisfy the transaction payment condition requirement.
 
