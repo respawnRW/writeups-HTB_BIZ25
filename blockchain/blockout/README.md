@@ -67,21 +67,41 @@ Key functions of the blockchain application:
 When analyzing the smart contract’s source code, the following function makes it clear it’s 4 ethers.
 
 ```solidity
-function requestQuotaIncrease(uint8 amount) external payable {
-require(msg.value == 4 ether, "Insufficient payment");
-// Logic to increase quota
-}
+  function requestQuotaIncrease(uint8 _gatewayID) external payable circuitBreaker failSafeMonitor {
+    Gateway storage gateway = controlUnit.registeredGateways[_gatewayID];
+    require(msg.value > 0, "[VCNK] Deposit must be greater than 0.");
+    require(gateway.status != GATEWAY_STATUS_UNKNOWN, "[VCNK] Gateway is not registered.");
+    require(gateway.availableQuota + msg.value <= MAX_ALLOWANCE_PER_GATEWAY, "[VCNK] Requested quota exceeds maximum allowance per gateway.");
+    gateway.availableQuota += msg.value;
+    controlUnit.allocatedAllowance += msg.value;
+    emit GatewayQuotaIncrease(_gatewayID, msg.value);
+  }
 ```
 
-Anything less than 4 ethers does not satisfy the transaction payment condition requirement.
+Anything less than 4 ethers does not satisfy the transaction payment condition requirement. Ok, makes sense, but where are those constants declared?
+
+At the beginning of the file:
+
+```solidity
+  uint256 constant MAX_CAPACITY = 100 ether;
+  uint256 constant MAX_ALLOWANCE_PER_GATEWAY = 4 ether;
+  uint256 constant GATEWAY_REGISTRATION_FEE = 20 ether;
+  uint256 constant FAILSAFE_THRESHOLD = 10 ether;
+```
 
 Similary we could see that 20 ethers are required to register a new gateway:
 
 ```solidity
-function registerGateway() external payable {
-require(msg.value == 20 ether, "Insufficient payment");
-// Gateway registration logic
-}
+  function registerGateway() external payable circuitBreaker failSafeMonitor {
+    uint8 id = controlUnit.latestRegisteredGatewayID;
+    require(
+      id < MAX_GATEWAYS,
+      "[VCNK] Maximum number of registered gateways reached. Infrastructure will be scaled up soon, sorry for the inconvenience."
+    );
+    require(msg.value == GATEWAY_REGISTRATION_FEE, "[VCNK] Registration fee must be 20 ether.");
+    emit GatewayDeployed(controlUnit.latestRegisteredGatewayID, msg.sender);
+    _deployGateway(id);
+  }
 ```
 
 By reading through the function definitions and usage of “msg.value”, technically, how the app is enforcing payments: 4 ether for the request quota increase and 20 ether to register a gateway. Moreover, how it was planned to protect the grid from failures. This being the app’s main defense mechanism against a failing infrastructure. The safe operation is checked by the following function:
@@ -142,12 +162,12 @@ This locks the control unit in a stuck “delivering” state forever.
 Gateways are considered “healthy” if the following condition is met:
 
 ```solidity
-function healthcheck() external view onlyProxy returns (bool) {
-return (
-_kernel() != address(0) &&
-energyVault <= MAX_VAULT_CAPACITY
-);
-}
+    function healthcheck() external view onlyProxy returns (bool) {
+        return (
+            _kernel() != address(0) &&
+            energyVault <= MAX_VAULT_CAPACITY
+        );
+    }
 ```
 
 This check does not validate whether the gateway is actually delivering power or stuck. Quickly, we realize that this is a weak healthcheck after all, since it ignores real operation health. It is exploitable.
@@ -165,19 +185,19 @@ We can build on top of these our exploitation chain.
 The contract triggers emergency mode if less than 50% of the gateways are healthy. Furthermore, we also know that because gateways never get cleaned up when the control unit is in stuck mode, this allows us to flood the system with failing gateways to dilute the healthy percentage and force trigger this emergency mode. This is a logic flaw in the application implementation, that ultimately can open the door for us crash the power grid.
 
 ```solidity
-modifier failSafeMonitor() {
-if (controlUnit.currentCapacity <= FAILSAFE_THRESHOLD) {
-controlUnit.status = CU_STATUS_EMERGENCY;
-emit ControlUnitEmergencyModeActivated();
-}
-else if (controlUnit.healthyGatewaysPercentage < 50) {
-controlUnit.status = CU_STATUS_EMERGENCY;
-emit ControlUnitEmergencyModeActivated();
-}
-else {
-_;  // Continue execution only if no emergency conditions met
-}
-}
+  modifier failSafeMonitor() {
+    if (controlUnit.currentCapacity <= FAILSAFE_THRESHOLD) {
+      controlUnit.status = CU_STATUS_EMERGENCY;
+      emit ControlUnitEmergencyModeActivated();
+    }
+    else if (controlUnit.healthyGatewaysPercentage < 50) {
+      controlUnit.status = CU_STATUS_EMERGENCY;
+      emit ControlUnitEmergencyModeActivated();
+    }
+    else {
+      _;
+    }
+  }
 ```
 
 ## Success Criteria: isSolved?
@@ -187,10 +207,10 @@ Let’s also see when the challenge is considered as solved, right? Our aim is t
 ```solidity
 // Setup.sol
 function isSolved() public view returns (bool) {
-uint8 CU_STATUS_EMERGENCY = 3;
-(uint8 status, , , , ) = TARGET.controlUnit();
-return status == CU_STATUS_EMERGENCY;
-}
+        uint8 CU_STATUS_EMERGENCY = 3;
+        (uint8 status, , , , ) = TARGET.controlUnit();
+        return status == CU_STATUS_EMERGENCY;
+    }
 ```
 In short, the challenge is solved when the control unit enters into emergency mode.
 
