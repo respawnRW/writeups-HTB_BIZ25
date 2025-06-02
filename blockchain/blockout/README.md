@@ -69,9 +69,9 @@ Key functions of the blockchain application:
 
 When analyzing the smart contract’s source code, the following function makes it clear it’s 4 ethers.
 
-```function requestQuotaIncrease(uint8 amount) external payable {
+```solidity
+function requestQuotaIncrease(uint8 amount) external payable {
 require(msg.value == 4 ether, "Insufficient payment");
-
 // Logic to increase quota
 
 }```
@@ -80,17 +80,17 @@ Anything less than 4 ethers does not satisfy the transaction payment condition r
 
 Similary we could see that 20 ethers are required to register a new gateway:
 
+```solidity
 function registerGateway() external payable {
-
 require(msg.value == 20 ether, "Insufficient payment");
-
 // Gateway registration logic
-
 }
+```
 
 By reading through the function definitions and usage of “msg.value”, technically, how the app is enforcing payments: 4 ether for the request quota increase and 20 ether to register a gateway. Moreover, how it was planned to protect the grid from failures. This being the app’s main defense mechanism against a failing infrastructure. The safe operation is checked by the following function:
 
-```function infrastructureSanityCheck() external {
+```solidity
+function infrastructureSanityCheck() external {
 uint256 healthy = 0;
 for (uint i = 0; i < gatewayCount; i++) {
 if (gateways[i].healthcheck()) {
@@ -109,7 +109,8 @@ Vulnerability #1: Stuck State Management Vulnerability
 
 controlUnit.status remains stuck on CU_STATUS_DELIVERING and never resets this status to IDLE.
 
-```function requestPowerDelivery(uint256 _amount, uint8 _gatewayID) external circuitBreaker failSafeMonitor {
+```solidity
+function requestPowerDelivery(uint256 _amount, uint8 _gatewayID) external circuitBreaker failSafeMonitor {
 Gateway storage gateway = controlUnit.registeredGateways[_gatewayID];
 require(controlUnit.status == CU_STATUS_IDLE, "[VCNK] Control unit is not in a valid state for power delivery.");
 require(gateway.status == GATEWAY_STATUS_IDLE, "[VCNK] Gateway is not in a valid state for power delivery.");
@@ -130,11 +131,12 @@ emit PowerDeliverySuccess(_gatewayID, _amount);
 ```
 This locks the control unit in a stuck “delivering” state forever.
 
-Vulnerability #2: Inadequate Health Check Flaw
+## Vulnerability #2: Inadequate Health Check Flaw
 
 Gateways are considered “healthy” if the following condition is met:
 
-```function healthcheck() external view onlyProxy returns (bool) {
+```solidity
+function healthcheck() external view onlyProxy returns (bool) {
 return (
 _kernel() != address(0) &&
 energyVault <= MAX_VAULT_CAPACITY
@@ -146,16 +148,16 @@ This check does not validate whether the gateway is actually delivering power or
 Any gateway is appearing to be healthy as long the following 2 conditions are met:
 
 ✅_kernel is set (it is during registration)
-
 ✅energyVault is under the cap.
 
 We can build on top of these our exploitation chain.
 
-Vulnerability #3: Emergency Trigger Mechanism Flaw
+## Vulnerability #3: Emergency Trigger Mechanism Flaw
 
 The contract triggers emergency mode if less than 50% of the gateways are healthy. Furthermore, we also know that because gateways never get cleaned up when the control unit is in stuck mode, this allows us to flood the system with failing gateways to dilute the healthy percentage and force trigger this emergency mode. This is a logic flaw in the application implementation, that ultimately can open the door for us crash the power grid.
 
-```modifier failSafeMonitor() {
+```solidity
+modifier failSafeMonitor() {
 if (controlUnit.currentCapacity <= FAILSAFE_THRESHOLD) {
 controlUnit.status = CU_STATUS_EMERGENCY;
 emit ControlUnitEmergencyModeActivated();
@@ -173,7 +175,8 @@ _;  // Continue execution only if no emergency conditions met
 
 Let’s also see when the challenge is considered as solved, right? Our aim is to achieve this state.
 
-```// Setup.sol
+```solidity
+// Setup.sol
 function isSolved() public view returns (bool) {
 uint8 CU_STATUS_EMERGENCY = 3;
 (uint8 status, , , , ) = TARGET.controlUnit();
