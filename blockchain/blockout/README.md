@@ -1,4 +1,5 @@
-# HTB Business 2025 - Global Cyber Skills Benchmark - Operation Blackout
+# HTB Business 2025 - Global Cyber Skills Benchmark
+# Operation Blackout
 
 # Blockout | Blockchain | Medium
 
