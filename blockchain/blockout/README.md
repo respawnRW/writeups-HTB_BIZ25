@@ -10,7 +10,6 @@
 94.237.48.12:53205
 94.237.48.12:47210
 ```
-
 ## Recon the Challenge
 
 This is a blockchain challenge, after spawning the challenge we are facing two docker instances.
@@ -223,7 +222,7 @@ Analysing the source code of the blockchain application, identifying the flaws a
 
 Check out a quick flow chart that visualizes the sequential logic steps of the exploit scenario.
 
-[!image](https://github.com/respawnRW/writeups/assets/)
+![image](https://github.com/user-attachments/assets/253d7671-b369-4fec-be78-20724e9309d9)
 
 ### What this means in layman’s terms?
 
