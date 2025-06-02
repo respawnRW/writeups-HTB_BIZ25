@@ -215,10 +215,10 @@ Once we understood the above vulnerabilities and overall functionality of the ap
 
 Analysing the source code of the blockchain application, identifying the flaws and vulnerabilities, we can put together a straightforward and concrete plan on how to crash the power grid.
 
-1. Use requestQuotaIncrease to pay the quota (4 ether /piece).  
-2. Trigger requestPowerDelivery to set DELIVERING state.  
-3. Repeatedly register failing gateways (registerGateway, 20 ether /each).  
-4. Run infrastructureSanityCheck to update the healthy percentage.  
+1. Use `requestQuotaIncrease` to pay the quota (4 ether /piece).  
+2. Trigger `requestPowerDelivery` to set `DELIVERING` state.  
+3. Repeatedly register failing gateways (`registerGateway`, 20 ether /each).  
+4. Run `infrastructureSanityCheck` to update the healthy percentage.  
 5. Once healthy percentage < 50%, emergency mode triggers and we win!  
 
 Check out a quick flow chart that visualizes the sequential logic steps of the exploit scenario.
