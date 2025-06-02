@@ -87,18 +87,24 @@ require(msg.value == 20 ether, "Insufficient payment");
 By reading through the function definitions and usage of “msg.value”, technically, how the app is enforcing payments: 4 ether for the request quota increase and 20 ether to register a gateway. Moreover, how it was planned to protect the grid from failures. This being the app’s main defense mechanism against a failing infrastructure. The safe operation is checked by the following function:
 
 ```solidity
-function infrastructureSanityCheck() external {
-uint256 healthy = 0;
-for (uint i = 0; i < gatewayCount; i++) {
-if (gateways[i].healthcheck()) {
-healthy++;
+function infrastructureSanityCheck() external circuitBreaker failSafeMonitor {
+    uint8 healthyGateways = 0;
+    for (uint8 id = 0; id < controlUnit.latestRegisteredGatewayID; id++) {
+        Gateway storage gateway = controlUnit.registeredGateways[id];
+        bool isGatewayHealthy = VCNKv2CompatibleReceiver(gateway.addr).healthcheck();
+        if (isGatewayHealthy) {
+            healthyGateways++;
+        } else {
+            gateway.status = GATEWAY_STATUS_DEADLOCK;
+            controlUnit.allocatedAllowance -= gateway.availableQuota;
+            gateway.availableQuota = 0;
+            emit GatewayNeedsMaintenance(id);
+        }
+    }
+    uint8 result = uint8((uint256(healthyGateways) * 100) / controlUnit.latestRegisteredGatewayID);
+    controlUnit.healthyGatewaysPercentage = result;
 }
-}
-healthyPercentage = (healthy * 100) / gatewayCount;
-if (healthyPercentage < 50) {
-triggerEmergencyMode();
-}
-}
+
 ```
 Ultimately, this is when we uncovered critical vulnerabvilities in the logic. These checks are not robust enough to handle edge cases. Let’s explain each of these vulnerabilities one-by-one.
 
@@ -108,22 +114,25 @@ controlUnit.status remains stuck on CU_STATUS_DELIVERING and never resets this s
 
 ```solidity
 function requestPowerDelivery(uint256 _amount, uint8 _gatewayID) external circuitBreaker failSafeMonitor {
-Gateway storage gateway = controlUnit.registeredGateways[_gatewayID];
-require(controlUnit.status == CU_STATUS_IDLE, "[VCNK] Control unit is not in a valid state for power delivery.");
-require(gateway.status == GATEWAY_STATUS_IDLE, "[VCNK] Gateway is not in a valid state for power delivery.");
-require(_amount > 0, "[VCNK] Requested power must be greater than 0.");
-require(_amount <= gateway.availableQuota, "[VCNK] Insufficient quota.");
-emit PowerDeliveryRequest(_gatewayID, _amount);
-controlUnit.status = CU_STATUS_DELIVERING;
-controlUnit.currentCapacity -= _amount;
-gateway.status = GATEWAY_STATUS_ACTIVE;
-gateway.totalUsage += _amount;
-bool status = VCNKv2CompatibleReceiver(gateway.addr).deliverEnergy(_amount);
-require(status, "[VCNK] Power delivery failed.");
-controlUnit.currentCapacity = MAX_CAPACITY;
-gateway.status = GATEWAY_STATUS_IDLE;
-emit PowerDeliverySuccess(_gatewayID, _amount);
-}
+    Gateway storage gateway = controlUnit.registeredGateways[_gatewayID];
+    require(controlUnit.status == CU_STATUS_IDLE, "[VCNK] Control unit is not in a valid state for power delivery.");
+    require(gateway.status == GATEWAY_STATUS_IDLE, "[VCNK] Gateway is not in a valid state for power delivery.");
+    require(_amount > 0, "[VCNK] Requested power must be greater than 0.");
+    require(_amount <= gateway.availableQuota, "[VCNK] Insufficient quota.");
+    
+    emit PowerDeliveryRequest(_gatewayID, _amount);
+    controlUnit.status = CU_STATUS_DELIVERING;
+    controlUnit.currentCapacity -= _amount;
+    gateway.status = GATEWAY_STATUS_ACTIVE;
+    gateway.totalUsage += _amount;
+
+    bool status = VCNKv2CompatibleReceiver(gateway.addr).deliverEnergy(_amount);
+    require(status, "[VCNK] Power delivery failed.");
+
+    controlUnit.currentCapacity = MAX_CAPACITY;
+    gateway.status = GATEWAY_STATUS_IDLE;
+    emit PowerDeliverySuccess(_gatewayID, _amount);
+  }
 
 ```
 This locks the control unit in a stuck “delivering” state forever.
