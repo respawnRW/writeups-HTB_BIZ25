@@ -10,7 +10,7 @@
 94.237.48.12:53205
 94.237.48.12:47210
 ```
-## Recon the Challenge
+## Challenge Recon
 
 This is a blockchain challenge, after spawning the challenge we are facing two docker instances.
 
