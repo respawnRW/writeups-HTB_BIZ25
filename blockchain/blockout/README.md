@@ -173,7 +173,7 @@ Any gateway is appearing to be healthy as long the following 2 conditions are me
 - _kernel is set (it is during registration)  
 - energyVault is under the cap.  
 
-We can build on top of these our exploitation chain.
+We can build on top of these our exploitation chain. This simplistic health check logic becomes the pivot point that allows us to poison the system’s healthy gateway count and mislead the entire infrastructure.
 
 ## Vulnerability #3: Emergency Trigger Mechanism Flaw
 
