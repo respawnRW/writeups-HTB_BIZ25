@@ -17,9 +17,9 @@ This is a blockchain challenge, after spawning the challenge we are facing two d
 
 The first is the RPC URL, while the second instance is the interface where we communicate with the challenge endpoint. We realize this by visiting both of the urls. How to interact with them? Let’s analyze these two URLs:
 
-RPC URL: *94.237.48.12:53205*
+**RPC URL:** *94.237.48.12:53205*
 
-Challenge UI: *nc 94.237.48.12 47210*
+**Challenge UI:** *nc 94.237.48.12 47210*
 
 The first endpoint exposes a blockchain RPC node, the second is an interface to retrieve player credentials and perform challenge environment specific actions, such as get flag or restart instance.
 
@@ -56,13 +56,13 @@ Diving into the source code of this challenge, we realize it is simulating a blo
 
 Key functions of the blockchain application:
 
-✅requestQuotaIncrease(uint8 amount) → increase delivery quota by paying 4 ether.
+✅requestQuotaIncrease(uint8 amount) → increase delivery quota by paying 4 ether.  
 
-✅requestPowerDelivery(uint256 amount, uint8 gatewayId) → triggers the “delivering” status.
+✅requestPowerDelivery(uint256 amount, uint8 gatewayId) → triggers the “delivering” status.  
 
-✅registerGateway() → adds a new gateway, costs 20 ether.
+✅registerGateway() → adds a new gateway, costs 20 ether.  
 
-✅infrastructureSanityCheck() → recalculates the healthy percentage of gateways.
+✅infrastructureSanityCheck() → recalculates the healthy percentage of gateways.  
 
 When analyzing the smart contract’s source code, the following function makes it clear it’s 4 ethers.
 
@@ -174,9 +174,9 @@ This check does not validate whether the gateway is actually delivering power or
 
 Any gateway is appearing to be healthy as long the following 2 conditions are met:
 
-✅_kernel is set (it is during registration)
+✅_kernel is set (it is during registration)  
 
-✅energyVault is under the cap.
+✅energyVault is under the cap.  
 
 We can build on top of these our exploitation chain.
 
