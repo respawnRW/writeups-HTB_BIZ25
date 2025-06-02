@@ -125,7 +125,7 @@ Ultimately, this is when we uncovered critical vulnerabvilities in the logic. Th
 
 ## Vulnerability #1: Stuck State Management Vulnerability
 
-controlUnit.status remains stuck on CU_STATUS_DELIVERING and never resets this status to IDLE.
+**controlUnit.status** remains stuck on *CU_STATUS_DELIVERING* and never resets this status to *IDLE*.
 
 ```solidity
 function requestPowerDelivery(uint256 _amount, uint8 _gatewayID) external circuitBreaker failSafeMonitor {
