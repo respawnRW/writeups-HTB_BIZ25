@@ -105,7 +105,7 @@ triggerEmergencyMode();
 ```
 Ultimately, this is when we uncovered critical vulnerabvilities in the logic. These checks are not robust enough to handle edge cases. Let’s explain each of these vulnerabilities one-by-one.
 
-Vulnerability #1: Stuck State Management Vulnerability
+## Vulnerability #1: Stuck State Management Vulnerability
 
 controlUnit.status remains stuck on CU_STATUS_DELIVERING and never resets this status to IDLE.
 
@@ -141,7 +141,8 @@ return (
 _kernel() != address(0) &&
 energyVault <= MAX_VAULT_CAPACITY
 );
-}```
+}
+```
 
 This check does not validate whether the gateway is actually delivering power or stuck. Quickly, we realize that this is a weak healthcheck after all, since it ignores real operation health. It is exploitable.
 
@@ -169,7 +170,8 @@ emit ControlUnitEmergencyModeActivated();
 else {
 _;  // Continue execution only if no emergency conditions met
 }
-}```
+}
+```
 
 ## Success Criteria: isSolved?
 
@@ -192,12 +194,16 @@ Once we understood the above vulnerabilities and overall functionality of the ap
 Analysing the source code of the blockchain application, identifying the flaws and vulnerabilities, we can put together a straightforward and concrete plan on how to crash the power grid.
 
 ✅ 1. Use requestQuotaIncrease to pay the quota (4 ether /piece).
+
 ✅ 2. Trigger requestPowerDelivery to set DELIVERING state.
+
 ✅ 3. Repeatedly register failing gateways (registerGateway, 20 ether /each).
+
 ✅ 4. Run infrastructureSanityCheck to update the healthy percentage.
+
 ✅ 5. Once healthy percentage < 50%, emergency mode triggers and we win!
 
-What this means in layman’s terms?
+### What this means in layman’s terms?
 
 This challenge was about exploiting a stuck state in a smart contract-based power grid system. Normally, the system tracks healthy gateways (nodes that can deliver power). By triggering a stuck “delivering” state (using requestPowerDelivery), the system stopped cleaning up inactive gateways.
 
