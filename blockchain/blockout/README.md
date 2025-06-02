@@ -1,5 +1,4 @@
 # HTB Business 2025 - Global Cyber Skills Benchmark
-# Operation Blackout
 
 # Blockout | Blockchain | Medium
 
@@ -16,13 +15,11 @@
 
 This is a blockchain challenge, after spawning the challenge we are facing two docker instances.
 
-The first is the RPC URL, while the second instance is the interface where we communicate with the challenge endpoint. We realize this by visiting both of the urls. How to interact with them?
+The first is the RPC URL, while the second instance is the interface where we communicate with the challenge endpoint. We realize this by visiting both of the urls. How to interact with them? Let’s analyze these two URLs:
 
-Let’s analyze these two URLs:
+RPC URL: *94.237.48.12:53205*
 
-RPC URL: 94.237.48.12:53205
-
-Challenge UI: nc 94.237.48.12 47210
+Challenge UI: *nc 94.237.48.12 47210*
 
 The first endpoint exposes a blockchain RPC node, the second is an interface to retrieve player credentials and perform challenge environment specific actions, such as get flag or restart instance.
 
